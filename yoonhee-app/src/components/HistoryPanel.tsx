@@ -1,5 +1,6 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/solid';
+import { ChatService } from '../services/ChatService';
 
 interface ChatSession {
   id: string;
@@ -10,11 +11,45 @@ interface ChatSession {
 interface HistoryPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  sessions: ChatSession[];
   onSelectSession: (sessionId: string) => void;
 }
 
-export default function HistoryPanel({ isOpen, onClose, sessions, onSelectSession }: HistoryPanelProps) {
+export default function HistoryPanel({ isOpen, onClose, onSelectSession }: HistoryPanelProps) {
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSessions();
+    }
+  }, [isOpen]);
+
+  const loadSessions = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const sessionData = await ChatService.listSessions();
+      
+      const formattedSessions = sessionData.map(session => ({
+        id: session.id,
+        title: session.title,
+        date: new Date(session.createdAt)
+      }));
+      
+      // Sort by date, newest first
+      formattedSessions.sort((a, b) => b.date.getTime() - a.date.getTime());
+      
+      setSessions(formattedSessions);
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      setError('Failed to load chat history. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -30,7 +65,19 @@ export default function HistoryPanel({ isOpen, onClose, sessions, onSelectSessio
           </button>
         </div>
         
-        {sessions.length === 0 ? (
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex space-x-2">
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-100"></div>
+              <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-200"></div>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center text-red-500 dark:text-red-400 text-center px-4">
+            {error}
+          </div>
+        ) : sessions.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
             No chat history yet
           </div>

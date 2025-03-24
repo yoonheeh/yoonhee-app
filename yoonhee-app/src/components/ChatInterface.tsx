@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import Message from './Message';
+import { ChatService } from '../services/ChatService';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ChatMessage {
   id: string;
   content: string;
   isUser: boolean;
   timestamp: Date;
+  sessionId?: string;
 }
 
-export default function ChatInterface() {
+export default function ChatInterface({ sessionId: propSessionId }: { sessionId?: string }) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -20,6 +23,7 @@ export default function ChatInterface() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string>(propSessionId || uuidv4());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +45,49 @@ export default function ChatInterface() {
     }
   }, [isLoading]);
 
+  // Load messages if a session ID is provided
+  useEffect(() => {
+    if (propSessionId) {
+      setSessionId(propSessionId);
+      loadMessages(propSessionId);
+    } else {
+      // Create a new session
+      createSession();
+    }
+  }, [propSessionId]);
+
+  const loadMessages = async (sid: string) => {
+    try {
+      setIsLoading(true);
+      const sessionMessages = await ChatService.getMessagesForSession(sid);
+      
+      if (sessionMessages && sessionMessages.length > 0) {
+        const formattedMessages = sessionMessages.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          isUser: msg.isUser,
+          timestamp: new Date(msg.createdAt),
+          sessionId: msg.sessionId
+        }));
+        
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createSession = async () => {
+    try {
+      const newSession = await ChatService.createSession('New Conversation');
+      setSessionId(newSession.id);
+    } catch (error) {
+      console.error('Error creating session:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,12 +96,13 @@ export default function ChatInterface() {
     // Store the current input value before clearing it
     const currentInput = input;
     
-    // Add user message
+    // Add user message to UI immediately
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      content: input,
+      content: currentInput,
       isUser: true,
       timestamp: new Date(),
+      sessionId,
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -62,25 +110,32 @@ export default function ChatInterface() {
     setIsLoading(true);
     
     try {
-      // This is where we would normally make an API call to our backend
-      // For now, we'll simulate a response
-      setTimeout(() => {
+      // Save user message to backend
+      await ChatService.createMessage(currentInput, sessionId, true);
+      
+      // Simulate assistant response
+      setTimeout(async () => {
+        const responseContent = `I've stored your message: "${currentInput}". You can ask me about this information later.`;
+        
+        // Save assistant message to backend
+        await ChatService.createMessage(responseContent, sessionId, false);
+        
+        // Add assistant message to UI
         const assistantMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          content: `I've stored your message: "${currentInput}". You can ask me about this information later.`,
+          content: responseContent,
           isUser: false,
           timestamp: new Date(),
+          sessionId,
         };
         
         setMessages(prev => [...prev, assistantMessage]);
         setIsLoading(false);
-        // Focus is handled by the useEffect now
       }, 1000);
       
     } catch (error) {
       console.error('Error sending message:', error);
       setIsLoading(false);
-      // Focus is handled by the useEffect now
     }
   };
 
