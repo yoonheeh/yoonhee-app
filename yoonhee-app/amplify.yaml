@@ -10,7 +10,7 @@ applications:
           - npm ci
           - npm run build
       artifacts:
-        baseDirectory: .next
+        baseDirectory: yoonhee-app/.next
         files:
           - '**/*'
       cache:
