@@ -16,8 +16,8 @@ export default function Home() {
   const [chatKey, setChatKey] = useState(1);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null); //TODO: need to disable ESLint for this line
+  console.log(currentSessionId);
   // Simulate loading sessions from storage on initial load
   useEffect(() => {
     // In a real app, this would fetch from a database or localStorage
