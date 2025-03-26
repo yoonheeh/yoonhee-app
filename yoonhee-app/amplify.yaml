@@ -1,10 +1,10 @@
 version: 2
+appRoot: yoonhee-app
 applications:
   - frontend:
       source:
         repository: ${AMPLIFY_REPOSITORY}
         branch: ${AMPLIFY_BRANCH}
-        appRoot: yoonhee-app
       build:
         commands:
           - npm ci
