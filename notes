@@ -1,0 +1,27 @@
+previously given prompt:
+I want to make an assistant that takes text input and stores the information somewhere safe. Then, this assistant will answer questions both about the information previously provided and just general information it knows already.
+What tech stacks should be used? This is only a planning phase.
+
+For your text-based assistant that stores and retrieves information, I'd recommend the following tech stack:
+Frontend:
+React.js or Next.js - For building a responsive UI
+TypeScript - For type safety
+Tailwind CSS - For styling
+Backend:
+Node.js with Express - For API endpoints
+MongoDB or PostgreSQL - For persistent storage
+Vector database (like Pinecone or Chroma) - For semantic search capabilities
+AI/NLP:
+OpenAI API or Hugging Face models - For natural language understanding
+LangChain or similar - For context management and retrieval
+Authentication:
+Auth0 or NextAuth - For secure user authentication
+Deployment:
+Vercel or Netlify - For frontend hosting
+Railway or Render - For backend deployment
+Docker - For containerization
+This stack provides a good balance of developer experience, scalability, and the specialized tools needed for AI-powered information retrieval and storage.
+
+==
+
+
